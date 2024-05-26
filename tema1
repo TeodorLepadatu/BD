@@ -1,0 +1,204 @@
+--1
+/*
+Sa se afiseze numele, salariul, titlul jobului, codul si numele
+departamentului, id-ul locatiei, orasul si tara in care lucreaza angajatii
+condusi direct de „hunoldalexander” si care au fost angajati intre
+01-07-1991 si 28-02-1999. Pe ultima coloana se va afisa numele
+managerului (Hunold), concatenat cu spatiu, concatenat cu prenumele sau
+(Alexander). Coloana o sa se numeasca Nume si Prenume Manager.
+*/
+
+SELECT 
+    e.last_name,
+    e.salary,
+    j.job_title,
+    d.department_id,
+    d.department_name,
+    l.location_id,
+    l.city,
+    c.country_name,
+    m.last_name || ' ' || m.first_name AS "Nume si Prenume Manager"
+FROM 
+    employees e
+JOIN 
+    jobs j ON e.job_id = j.job_id
+JOIN 
+    departments d ON e.department_id = d.department_id
+JOIN 
+    locations l ON d.location_id = l.location_id
+JOIN 
+    employees m ON e.manager_id = m.employee_id
+JOIN
+    countries c ON l.country_id = c.country_id
+WHERE 
+    m.last_name = 'Hunold' 
+    AND m.first_name = 'Alexander'
+    AND e.hire_date BETWEEN DATE '1991-07-01' AND DATE '1999-02-28';
+
+--2
+/*
+Sa se listeze codul departamentului, numele departamentului si codul
+managerului de departament. In cazul in care un departament nu are
+manager se va afisa pe coloana respectiva, in output, mesajul:
+“Departamentul <department_id> nu are manager” (ex: Departamentul
+120 nu are manager). Coloana se va numi “Manageri departamente”. De
+asemenea, in cadrul aceleiasi cereri, sa se afiseze atat departamentele care
+au angajati, cat si cele fara angajati. In cazul in care un departament are
+angajati, se va afisa si codul acestor angajati (o coloana unde se vor afisa
+codurile de angajati pentru fiecare departament in parte). Daca un
+departament nu are angajati, se va afisa pe coloana respectiva, in output,
+mesajul: “Departamentul nu are angajati”. Coloana se va numi “Angajati
+departamente”. In final se vor afisa 4 coloane: department_id,
+department_name, Angajati departamente, Manageri departamente.
+*/
+
+SELECT d.department_id, d.department_name, 
+NVL(TO_CHAR(m.employee_id),'Departamentul ' || TO_CHAR(d.department_id) || ' nu are manager') AS "Manageri departamente", 
+NVL(TO_CHAR(e.employee_id),'Departamentul nu are angajati') AS "Angajati departamente"
+FROM 
+    departments d
+    LEFT JOIN employees e ON d.department_id = e.department_id
+    LEFT JOIN employees m ON d.manager_id = m.employee_id;
+
+-------------------------------------------------------NU AM TERMINAT--------------------------------------------------------
+
+--3
+/*
+Sa se afiseze codul si numele angajatilor, codul departamentului,
+salariul si codul job-ului tuturor angaja?ilor care lucreaza in departamente
+si al caror salariu si comision coincid cu salariul si comisionul unui
+angajat din Oxford (scris exact asa).
+*/
+
+SELECT employee_id, last_name, department_id, salary, job_id
+FROM employees
+WHERE 
+    (salary, commission_pct) IN 
+    (SELECT salary, commission_pct 
+    FROM locations 
+    WHERE upper(city) = 'OXFORD'
+    AND department_id is not null);
+
+--4
+/*
+Sa se creeze tabelele urmatoare CAMPANIE_PNU si
+SPONSOR_PNU
+*/
+CREATE TABLE SPONSOR_TLE (
+    cod_sponsor NUMBER PRIMARY KEY,
+    nume VARCHAR2(100) NOT NULL UNIQUE,
+    email VARCHAR2(100) UNIQUE
+);
+
+CREATE TABLE CAMPANIE_TLE (
+    cod_campanie NUMBER PRIMARY KEY,
+    titlu VARCHAR2(100) NOT NULL,
+    data_start DATE DEFAULT SYSDATE,
+    data_end DATE,
+    valoare VARCHAR(50),
+    cod_sponsor NUMBER,
+    CONSTRAINT fk_sponsor FOREIGN KEY (cod_sponsor) REFERENCES SPONSOR_TLE(cod_sponsor),
+    CONSTRAINT check_date CHECK (data_end > data_start)
+);
+desc SPONSOR_TLE;
+desc CAMPANIE_TLE;
+--5
+/*
+Sa se insereze in baza de date urmatoarele inregistrari, folosind la
+alegere metoda implicita sau explicita, precizand varianta aleasa.
+*/
+--METODA IMPLICITA:
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (10, 'CISCO', 'cisco@gmail.com');
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (20, 'KFC', NULL);
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (30, 'ADOBE', 'adobe@adobe.com');
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (40, 'BRD', NULL);
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (50, 'VODAFONE', 'vdf@gmail.com');
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (60, 'BCR', NULL);
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (70, 'SAMSUNG', NULL);
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (80, 'IBM', 'ibm@ibm.com');
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (90, 'OMV', NULL);
+INSERT INTO SPONSOR_TLE (cod_sponsor, nume, email) VALUES (100, 'ENEL', NULL);
+
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (1, 'CAMP1', SYSDATE, TO_DATE('2024-06-20', 'YYYY-MM-DD'), 1200, 10);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (2, 'CAMP2', SYSDATE, TO_DATE('2024-07-25', 'YYYY-MM-DD'), 3400, 20);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (3, 'CAMP3', SYSDATE, TO_DATE('2024-06-10', 'YYYY-MM-DD'), NULL, 30);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (4, 'CAMP4', SYSDATE, TO_DATE('2024-06-20', 'YYYY-MM-DD'), NULL, 40);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (5, 'CAMP5', SYSDATE, TO_DATE('2024-06-05', 'YYYY-MM-DD'), 2200, 50);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (6, 'CAMP6', SYSDATE, TO_DATE('2024-08-15', 'YYYY-MM-DD'), NULL, 60);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (7, 'CAMP7', SYSDATE, TO_DATE('2024-09-02', 'YYYY-MM-DD'), 5500, 70);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (8, 'CAMP8', SYSDATE, TO_DATE('2024-10-10', 'YYYY-MM-DD'), NULL, 20);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (9, 'CAMP9', SYSDATE, TO_DATE('2024-06-10', 'YYYY-MM-DD'), 4000, 30);
+INSERT INTO CAMPANIE_TLE (cod_campanie, titlu, data_start, data_end, valoare, cod_sponsor) VALUES (10, 'CAMP10', SYSDATE, TO_DATE('2024-09-25', 'YYYY-MM-DD'), 3500, NULL);
+
+select *from SPONSOR_TLE;
+select *from CAMPANIE_TLE;
+commit;
+--6
+/*
+Sa se stearga campaniile care vor expira inainte de data 01-07-2024.
+Se va adauga un print screen cu rezultatele ramase in urma stergerii, dupa
+care se vor anula modificarile.
+*/
+DELETE FROM CAMPANIE_TLE
+WHERE data_end < TO_DATE('01-07-2024', 'DD-MM-YYYY');
+
+select *from CAMPANIE_TLE;
+
+rollback;
+
+--7
+/*
+Sa se modifice valoarea tuturor campaniilor, aplicandu-se o majorare
+cu 25%. Daca o campanie nu are valoare, atunci ea este o campanie
+caritabila si se va completa cu textul “Campanie Caritabila”. Se va atasa
+in document un print cu valorile modificate (output-ul dupa rulare) dupa
+care se vor anula modificarile.
+*/
+
+UPDATE CAMPANIE_TLE
+SET valoare = NVL(cast(valoare * 1.25 as varchar(50)), 'Campanie Caritabila');
+select * from CAMPANIE_TLE;
+rollback;
+--8
+/*
+Sa se stearga sponsorul 20 din baza de date. Explicati in cuvinte
+pasii necesari rezolvarii cu succes a cerintei. Dupa stergere anulati
+modificarile.
+*/
+
+-- identificam inregistrarile din CAMPANIE_TLE care fac referire la sponsorul cu codul 20
+SELECT * FROM CAMPANIE_TLE WHERE cod_sponsor = 20;
+
+-- stergem aceste inregistrari
+DELETE FROM CAMPANIE_TLE WHERE cod_sponsor = 20;
+
+-- dupa ce am sters inregistrarile din CAMPANIE_TLE, putem incerca din nou sa stergem randul din SPONSOR_TLE cu codul 20
+DELETE FROM SPONSOR_TLE WHERE cod_sponsor = 20;
+
+select *from CAMPANIE_TLE;
+select *from SPONSOR_TLE;
+
+rollback;
+--9
+/*
+Stergeti sponsorii care nu sponsorizeaza nicio campanie. Dupa
+stergere realizati un print screen output-ului (SELECT * FROM sponsor),
+dupa care salvati modificarile.
+*/
+SELECT *
+FROM SPONSOR_TLE s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM CAMPANIE_TLE c
+    WHERE c.cod_sponsor = s.cod_sponsor
+);
+
+DELETE FROM SPONSOR_TLE s
+WHERE NOT EXISTS (
+    SELECT 1    --asta verifica daca exista cel putin o valoare (adica daca am ce sa selectez, dar nu ma  intereseaza ce e acolo        
+    FROM CAMPANIE_TLE c
+    WHERE c.cod_sponsor = s.cod_sponsor
+);
+
+commit;
+select *from SPONSOR_TLE;
