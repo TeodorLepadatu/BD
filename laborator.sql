@@ -1619,3 +1619,247 @@ CREATE TABLE LUCRARE (
     FOREIGN KEY (cod_ob_inv) REFERENCES OBIECTIV_INVESTITIE(cod_ob_inv),
     FOREIGN KEY (cod_contractant) REFERENCES SUBANTREPRENOR(cod_contractant)
 );
+-- LABORATOR 8 - SAPTAMANA 12
+
+
+-- DISCUTIE EXERCITIUL 8
+
+-- EX 9
+
+9. S? se afi?eze codul, prenumele, numele ?i data angaj?rii, pentru angajatii condusi de Steven King 
+care au cea mai mare vechime dintre subordonatii lui Steven King. 
+Rezultatul nu va con?ine angaja?ii din anul 1970. 
+
+--SUBORDONATII LUI KING
+with subord as (select employee_id
+                from employees
+                where manager_id = 
+                                    (select employee_id
+                                     from employees
+                                     where lower(first_name || last_name) = 'stevenking')
+                ),
+--SUBORDONATII CU CEA MAI MARE VECHIME DINTRE CEI DE SUS
+vechime as (select employee_id
+            from subord
+            where hire_date = (select min(hire_date) from subord)
+            )
+--CEREREA PRINCIPALA
+select employee_id, first_name, last_name, hire_date
+from employees
+where employee_id in (select employee_id from vechime)
+and to_char(hire_date, 'yyyy')!=1970;
+
+
+10. Sa se obtina numele primilor 10 angajati avand salariul maxim. 
+Rezultatul se va afi?a în ordine cresc?toare a salariilor. 
+
+-- Solutia 1: subcerere sincronizat?
+
+-- numaram cate salarii sunt mai mari decat linia la care a ajuns
+
+select last_name, salary
+from employees e
+where 10 >
+     (select count(salary) 
+      from employees
+      where e.salary < salary
+     );
+
+
+
+
+-- Solutia 2: analiza top-n 
+-- ESTE CORECTA VARIANTA URMATOARE?
+--where se executa inainte de sortare
+select employee_id, last_name, salary, rownum
+from employees
+where rownum <= 10
+order by salary desc;
+--VARIANTA CORECTA
+--DORIM SA SORTAM INAINTE DE CONDITIA DIN WHERE
+
+select employee_id, last_name, salary, rownum
+from (select employee_id, salary, last_name
+      from employees
+      order by salary desc)
+where rownum <= 10
+order by salary desc;
+
+12.	S? se afi?eze informa?ii despre departamente, în formatul urm?tor: 
+"Departamentul <department_name> este condus de {<manager_id> | nimeni} 
+?i {are num?rul de salaria?i  <n> | nu are salariati}".
+
+select 'Departamentul ' || department_name || 'este condus de ' || NVL(to_char(manager_id), 'nimeni') || ' si ' || 'are numarul de angajati' ||
+case
+when (select count(employee_id)
+      from employees
+      where d.department_id = department_id
+      ) = 0
+then 'nu are salariati'
+else 'are numarul de salariati ' || (select count(employee_id)
+                                     from employees
+                                     where d.department_id = department_id)
+end "Detalii Departament"
+from departments d;
+
+17. Sa se afiseze salariatii care au fost angajati în aceea?i zi a lunii 
+în care cei mai multi dintre salariati au fost angajati 
+(ziua lunii insemnand numarul zilei, indiferent de luna si an).
+
+--DETERMINAM NR DE ANGAJATI PT FIECARE ZI
+--indiferent de luna si an
+select count(employee_id), to_char(hire_date, 'dd')
+from employees
+group by to_char(hire_date, 'dd');
+
+select max(count(employee_id))), to_char(hire_date, 'dd')
+from employees
+group by to_char(hire_date, 'dd');
+
+select max(count(employee_id))
+from employees
+group by to_char(hire_date, 'dd'); --12
+
+--ziua coresp
+select to_char(hire_date, 'dd')
+from employees
+group by to_char(hire_date, 'dd')
+having count(employee_id = (select max(count(employee_id))
+                            from employees
+                            group by to_char(hire_date, 'dd')));
+                            
+--cererea principala
+select *
+from employees
+where to_char(hire_date, 'dd') = (select to_char(hire_date, 'dd')
+from employees
+group by to_char(hire_date, 'dd')
+having count(employee_id = (select max(count(employee_id))
+                            from employees
+                            group by to_char(hire_date, 'dd'))));
+                            
+    
+5.	S? se afi?eze codul, numele ?i prenumele angaja?ilor care au cel pu?in doi subalterni. 
+
+a)
+
+select employee_id, last_name, first_name
+from employees mgr
+where 1 < (select count(employee_id)
+           from employees
+           where mgr.employee_id = manager_id
+          );
+
+--SAU:
+select employee_id, last_name, first_name
+from employees e join (select manager_id, count(*) 
+                       from employees 
+                       group by manager_id
+                       having count(*) >= 2
+                       ) man
+on e.employee_id = man.manager_id;
+
+
+b) Cati subalterni are fiecare angajat? Se vor afisa codul, numele, prenumele si numarul de subalterni.
+Daca un angajat nu are subalterni, o sa se afiseze 0 (zero). 
+
+
+select employee_id, last_name, first_name, (select count*(employee_id))
+___
+
+
+
+6.	S? se determine loca?iile în care se afl? cel pu?in un departament.
+
+-- REZOLVATI
+-- CEREREA TREBUIE SA AFISEZE 7 LOCATII 
+-- VEZI IMAGINEAZA ATASATA IN LABORATOR
+
+-- METODA 1 - IN (care este echivalent cu  = ANY )         
+
+
+-- METODA 2 - EXISTS
+
+
+
+7.	S? se determine departamentele în care nu exist? niciun angajat.
+
+-- REZOLVATI
+-- CEREREA TREBUIE SA RETURNEZE 16 DEPARTAMENTE
+-- VEZI IMAGINEAZA ATASATA IN LABORATOR
+
+-- METODA 1 - UTILIZAND NOT IN 
+
+SELECT department_id, department_name
+FROM departments d
+WHERE ___ NOT IN (SELECT ____
+                  FROM ____
+                  );
+
+
+-- METODA 2 - UTILIZAND NOT EXISTS
+
+SELECT department_id, department_name
+FROM departments d
+WHERE ___ (SELECT 
+           FROM 
+          );
+
+
+
+
+Displaying Template_Laborator8_Partea2.txt.
+
+select * from project;
+select * from works_on;
+select * from job_history;
+
+-- LABORATOR 9 - SAPTAMANA 12
+
+2.	S? se listeze informa?ii despre proiectele la care au participat to?i angaja?ii 
+care au de?inut alte 2 posturi în firm?.
+
+select employee_id
+from job_history
+group by employee_id
+having count(employee_id) = 2;
+
+--proiectele la care au lucrat angajatii care au detinut alte doua posturi in firma in trecut
+select project_id
+from works_on
+where employee__id in (select employee_id
+                        from job_history
+                        group by employee_id
+                        having count(employee_id) = 2
+                        )
+group by project_id
+having count(employee_id = (select employee_id
+                        from job_history
+                        group by employee_id
+                        having count(employee_id) = 2));
+3.	S? se ob?in? num?rul de angaja?i care au avut cel pu?in trei job-uri, 
+luându-se în considerare ?i job-ul curent.
+
+-- cel putin 3 joburi cu jobul curent inseamna ca in job_history sa aiba cel putin doua 
+-- acolo este istoricul joburilor trecute
+
+select e.last_name, 1 + (select count(*) fromm job_history j where j.employee_id = e.employee_id) as cnt from employees e where cnt >=3;
+
+
+
+
+4.	Pentru fiecare ?ar?, s? se afi?eze num?rul de angaja?i din cadrul acesteia.
+
+_____
+   
+
+
+   
+
+5.	S? se listeze codurile angaja?ilor ?i codurile proiectelor pe care au lucrat. 
+Listarea va cuprinde ?i angaja?ii care nu au lucrat pe niciun proiect.
+
+______
+
+
+Displaying Template_Laborator9_Partea1.txt.
